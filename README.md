@@ -14,7 +14,8 @@ Built with **LangChain**, **Chroma**, and **Streamlit**; LLM calls go through
    language, which matters a lot in a legal context.
 2. **Traceability.** Every answer is shown alongside the exact chunk (file + page)
    it was built from, so a reviewing attorney can verify it against the source
-   instead of taking the model's word for it.
+   instead of taking the model's word for it. The app also exposes its own
+   internals in the UI — see [Seeing what's happening under the hood](#seeing-whats-happening-under-the-hood).
 3. **Works on documents the model has never seen** — a freshly drafted NDA, an
    internal memo, a client's contract — not just public information baked into
    the model's training data.
@@ -43,6 +44,7 @@ app.py                          Streamlit app (the whole pipeline)
 requirements.txt                Dependencies
 .env.example                    Template for local secrets — copy to .env
 .streamlit/secrets.toml.example Template for Streamlit Cloud secrets
+.devcontainer/devcontainer.json GitHub Codespaces config — zero local install needed
 sample_docs/sample_nda.txt      Fictional NDA for instant testing
 ```
 
@@ -66,6 +68,25 @@ streamlit run app.py
 Open the local URL Streamlit prints, upload `sample_docs/sample_nda.txt`, and
 ask something like *"What is the term of this agreement?"* or *"What law
 governs disputes?"*
+
+No local Python? Open this repo in **GitHub Codespaces** instead (the `Code`
+button → `Create codespace`) — the included `.devcontainer` installs
+everything automatically and forwards port 8501 for you.
+
+## Seeing what's happening under the hood
+
+There's no separate database file or admin panel — Chroma runs **in-memory**
+inside the app process itself, so the app surfaces its own internals directly
+in the UI instead:
+
+- **📚 Indexed chunks** — appears after you upload a document. Shows every
+  chunk the text splitter produced and that got embedded into the vector
+  store. This *is* "the database" — there's nothing else to go look at.
+- **🔍 How this answer was built** — appears under every answer. Shows the
+  exact top-k chunks the similarity search retrieved for that question, the
+  literal system prompt sent to the LLM with `{context}` filled in, and the
+  model's raw response. This is the whole RAG trick laid bare: retrieval is
+  just a search, augmentation is just string concatenation into a prompt.
 
 ## Handling API keys securely (this repo is public)
 
@@ -93,6 +114,14 @@ required — removing it from a later commit doesn't remove it from git history.
    OPENROUTER_API_KEY = "your_real_key_here"
    ```
 4. Deploy. No key ever touches the git history.
+
+Every push to the tracked branch triggers an automatic redeploy — no manual
+action needed. Watch **⋮ → Manage app** logs right after pushing to see it
+happen; only use **⋮ → Reboot app** if nothing shows up there after a couple
+minutes (that means the GitHub↔Streamlit connection needs re-establishing,
+not that this is a normal step). For fast iteration, editing in Codespaces or
+locally (instant hot-reload on save) is a much tighter loop than pushing to
+Cloud for every small change — treat the Cloud deploy as "publish," not "test."
 
 ## Design decisions & trade-offs
 
@@ -123,6 +152,17 @@ required — removing it from a later commit doesn't remove it from git history.
   is a small but real detail.
 - **`k=4`, `chunk_size=800`** — tuned for short-to-medium documents like NDAs
   and briefs; larger filings would likely want bigger `k` or a reranking step.
+- **`openrouter/free` instead of a pinned free-tier model slug.** Hardcoding
+  a specific model (e.g. `meta-llama/llama-3.1-8b-instruct:free`) broke this
+  app in testing when OpenRouter discontinued that model's free tier —
+  `openrouter/free` is OpenRouter's own router that auto-selects among
+  whatever free models are currently available, so the app doesn't silently
+  break the next time a specific slug rotates out. Pin an exact model via
+  `OPENROUTER_MODEL` if you want deterministic behavior instead.
+- **Chroma's anonymized telemetry is disabled** (`ANONYMIZED_TELEMETRY=False`)
+  — appropriate for a tool meant to hold legal documents, and it also avoids
+  a real hang observed when that outbound telemetry call gets blocked by a
+  restrictive network.
 
 ## Roadmap (what "expand later" could look like)
 

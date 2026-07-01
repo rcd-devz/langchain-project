@@ -108,10 +108,12 @@ with st.sidebar:
     st.markdown(
         "1. Document → chunks (LangChain text splitter)\n"
         "2. Chunks → embeddings (local, `all-MiniLM-L6-v2`)\n"
-        "3. Embeddings → Chroma vector index\n"
+        "3. Embeddings → Chroma vector index (in-memory, this session only)\n"
         "4. Question → top-k relevant chunks retrieved\n"
-        "5. Chunks + question → LLM (via OpenRouter) → grounded answer\n\n"
-        "Every answer lists the source chunks it was built from, so you can verify it against the original text."
+        "5. Chunks + question → LLM (via OpenRouter, `openrouter/free` router) → grounded answer\n\n"
+        "**Want to see it happen?** After uploading, expand **📚 Indexed chunks** to see exactly "
+        "what got embedded and stored, and **🔍 How this answer was built** under any answer to see "
+        "the retrieved chunks plus the literal prompt sent to the LLM."
     )
     st.divider()
     st.caption("⚠️ Demo project — don't upload real client or privileged documents to a public deployment.")
