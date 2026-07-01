@@ -1,0 +1,77 @@
+MUTUAL NON-DISCLOSURE AGREEMENT
+
+This Mutual Non-Disclosure Agreement ("Agreement") is entered into as of March 3, 2026
+(the "Effective Date"), by and between Harrington & Cole LLP, a law firm organized under
+the laws of the State of Delaware with offices at 400 Market Street, Wilmington, Delaware
+("Harrington & Cole"), and Meridian Robotics, Inc., a Delaware corporation with its
+principal place of business at 88 Innovation Way, Austin, Texas ("Meridian"). Harrington
+& Cole and Meridian are each referred to individually as a "Party" and together as the
+"Parties."
+
+1. PURPOSE
+The Parties wish to explore a potential business relationship concerning the evaluation
+and possible licensing of an AI-assisted legal drafting tool developed by Meridian (the
+"Purpose"). In connection with the Purpose, each Party may disclose certain confidential
+and proprietary information to the other Party.
+
+2. DEFINITION OF CONFIDENTIAL INFORMATION
+"Confidential Information" means any non-public information disclosed by one Party (the
+"Disclosing Party") to the other Party (the "Receiving Party"), whether orally, in
+writing, or in electronic form, that is designated as confidential or that reasonably
+should be understood to be confidential given the nature of the information and the
+circumstances of disclosure, including but not limited to source code, product roadmaps,
+pricing, client lists, and litigation strategy.
+
+3. EXCLUSIONS
+Confidential Information does not include information that: (a) is or becomes publicly
+available through no fault of the Receiving Party; (b) was already known to the
+Receiving Party prior to disclosure, as shown by written records; (c) is independently
+developed by the Receiving Party without use of the Disclosing Party's Confidential
+Information; or (d) is rightfully received from a third party without restriction.
+
+4. OBLIGATIONS
+The Receiving Party shall (a) use the Confidential Information solely for the Purpose,
+(b) protect it using at least the same degree of care it uses to protect its own
+confidential information, and in no event less than reasonable care, and (c) not
+disclose it to any third party without the Disclosing Party's prior written consent,
+except to employees and advisors who need to know it for the Purpose and who are bound
+by confidentiality obligations at least as protective as those in this Agreement.
+
+5. TERM
+This Agreement is effective as of the Effective Date and continues for three (3) years.
+The confidentiality obligations in Section 4 survive termination of this Agreement for a
+period of two (2) years.
+
+6. RETURN OR DESTRUCTION OF MATERIALS
+Upon the Disclosing Party's written request, the Receiving Party shall promptly return
+or destroy all materials containing Confidential Information and certify such
+destruction in writing.
+
+7. REMEDIES
+Each Party acknowledges that unauthorized disclosure of Confidential Information may
+cause irreparable harm for which monetary damages would be an inadequate remedy, and
+that the Disclosing Party is entitled to seek injunctive relief in addition to any other
+available remedies.
+
+8. GOVERNING LAW AND DISPUTE RESOLUTION
+This Agreement is governed by the laws of the State of Delaware, without regard to its
+conflict-of-laws principles. Any dispute arising out of or relating to this Agreement
+shall be resolved by binding arbitration administered by the American Arbitration
+Association in Wilmington, Delaware, except that either Party may seek injunctive relief
+under Section 7 in a court of competent jurisdiction.
+
+9. NO LICENSE
+Nothing in this Agreement grants either Party any license or ownership right in the
+other Party's Confidential Information, intellectual property, or technology.
+
+10. ENTIRE AGREEMENT
+This Agreement constitutes the entire agreement between the Parties regarding its
+subject matter and supersedes all prior discussions or agreements, written or oral,
+relating to the Purpose.
+
+IN WITNESS WHEREOF, the Parties have executed this Agreement as of the Effective Date.
+
+HARRINGTON & COLE LLP                      MERIDIAN ROBOTICS, INC.
+By: _______________________                By: _______________________
+Name: Elena Harrington                     Name: David Ochoa
+Title: Managing Partner                    Title: General Counsel
