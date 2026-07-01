@@ -69,11 +69,24 @@ def load_document(uploaded_file):
 
 def build_chain(api_key: str, uploaded_files):
     docs = []
+    failed = []  # (filename, reason) for files that couldn't be read at all
     for f in uploaded_files:
-        docs.extend(load_document(f))
+        try:
+            docs.extend(load_document(f))
+        except Exception as e:
+            failed.append((f.name, str(e)))
 
     splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=100)
     chunks = splitter.split_documents(docs)
+
+    if not chunks:
+        detail = "; ".join(f"{name} ({err})" for name, err in failed) if failed else "no extractable text"
+        raise ValueError(
+            f"Couldn't index anything from the upload ({detail}). This usually means a "
+            "corrupted or password-protected PDF, or a scanned/image-only PDF with no "
+            "text layer — OCR isn't supported yet. Try a text-based PDF, or paste the "
+            "content into a .txt file instead."
+        )
 
     # Unique collection per index so re-uploading in the same session
     # never collides with a previous in-memory Chroma collection.
@@ -94,7 +107,7 @@ def build_chain(api_key: str, uploaded_files):
     )
     document_chain = create_stuff_documents_chain(llm, prompt)
     chain = create_retrieval_chain(retriever, document_chain)
-    return chain, chunks  # chunks returned so the UI can show what's actually in the index
+    return chain, chunks, failed  # chunks/failed returned so the UI can show what happened
 
 
 # ---------------------------------------------------------------- UI ----
@@ -142,9 +155,22 @@ if uploaded_files:
     current_names = [f.name for f in uploaded_files]
     if st.session_state.get("file_names") != current_names:
         with st.spinner("Indexing document(s)..."):
-            st.session_state.chain, st.session_state.chunks = build_chain(api_key, uploaded_files)
+            try:
+                chain, chunks, failed = build_chain(api_key, uploaded_files)
+            except ValueError as e:
+                st.error(f"⚠️ {e}")
+                st.session_state.pop("chain", None)
+                st.session_state.pop("chunks", None)
+                st.stop()
+            st.session_state.chain = chain
+            st.session_state.chunks = chunks
             st.session_state.file_names = current_names
             st.session_state.history = []
+        if failed:
+            st.warning(
+                "Some files couldn't be read and were skipped: "
+                + ", ".join(f"**{name}** ({err})" for name, err in failed)
+            )
 
     if "history" not in st.session_state:
         st.session_state.history = []
