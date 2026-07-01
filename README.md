@@ -41,7 +41,9 @@ returned with the chunks it relied on.
 
 ```
 app.py                          Streamlit app (the whole pipeline)
-requirements.txt                Dependencies
+requirements.txt                Python dependencies
+packages.txt                    System packages for Streamlit Cloud (tesseract, poppler — for OCR)
+.github/workflows/ci.yml        CI: installs deps, compiles, import smoke test
 .env.example                    Template for local secrets — copy to .env
 .streamlit/secrets.toml.example Template for Streamlit Cloud secrets
 .devcontainer/devcontainer.json GitHub Codespaces config — zero local install needed
@@ -166,6 +168,15 @@ loop than pushing to Cloud for every small change — treat the Cloud deploy as
   — appropriate for a tool meant to hold legal documents, and it also avoids
   a real hang observed when that outbound telemetry call gets blocked by a
   restrictive network.
+- **OCR fallback for scanned PDFs.** Law firms deal in scanned exhibits and
+  filings all the time — PDFs that are really just page images with no text
+  layer. When `PyPDFLoader` extracts no text from a PDF, the app rasterizes
+  each page (`pdf2image`/poppler) and runs OCR (`pytesseract`/tesseract),
+  then indexes the recovered text (chunks are tagged `ocr: True`). The system
+  binaries come from `packages.txt` on Streamlit Cloud; if they're ever
+  missing, the file is reported as unreadable rather than crashing the app.
+  Trade-off: OCR is slower and imperfect (recognition errors on poor scans),
+  so it's a fallback, not the default path.
 
 ## Roadmap (what "expand later" could look like)
 
@@ -179,7 +190,7 @@ loop than pushing to Cloud for every small change — treat the Cloud deploy as
   for firms with data-residency or confidentiality requirements.
 - An evaluation harness (e.g. RAGAS) to track answer faithfulness and
   retrieval relevancy as the prompt/chunking strategy changes.
-- OCR support for scanned PDFs, and `.docx` support for Word filings.
+- `.docx` support for Word filings (OCR for scanned PDFs is now built in).
 
 ## Disclaimer
 
