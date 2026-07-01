@@ -83,7 +83,7 @@ def build_chain(api_key: str, uploaded_files):
     llm = ChatOpenAI(
         api_key=api_key,
         base_url="https://openrouter.ai/api/v1",
-        model=os.getenv("OPENROUTER_MODEL", "meta-llama/llama-3.1-8b-instruct:free"),
+        model=os.getenv("OPENROUTER_MODEL", "openrouter/free"),
         temperature=0,
     )
 
