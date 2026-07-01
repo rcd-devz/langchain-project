@@ -10,3 +10,6 @@ sentence-transformers
 streamlit
 pypdf
 python-dotenv
+pytesseract
+pdf2image
+Pillow

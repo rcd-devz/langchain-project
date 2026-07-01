@@ -19,6 +19,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 from langchain_openai import ChatOpenAI
+from langchain_core.documents import Document
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_classic.chains import create_retrieval_chain
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain
@@ -52,14 +53,39 @@ def get_embeddings():
     return HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
 
+def _ocr_pdf(tmp_path: str) -> list[Document]:
+    """Fallback for scanned/image-only PDFs: rasterize each page and OCR it.
+
+    Only invoked when a PDF has no extractable text layer. Requires the
+    `tesseract-ocr` and `poppler-utils` system packages (see packages.txt);
+    if they're missing, the underlying libraries raise and the caller reports
+    the file as unreadable rather than crashing.
+    """
+    from pdf2image import convert_from_path  # lazy: only needed for scanned PDFs
+    import pytesseract
+
+    docs = []
+    for page_num, image in enumerate(convert_from_path(tmp_path, dpi=300)):
+        text = pytesseract.image_to_string(image)
+        if text.strip():
+            docs.append(Document(page_content=text, metadata={"page": page_num, "ocr": True}))
+    return docs
+
+
 def load_document(uploaded_file):
     suffix = os.path.splitext(uploaded_file.name)[1].lower()
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
         tmp.write(uploaded_file.read())
         tmp_path = tmp.name
     try:
-        loader = PyPDFLoader(tmp_path) if suffix == ".pdf" else TextLoader(tmp_path, encoding="utf-8")
-        docs = loader.load()
+        if suffix == ".pdf":
+            docs = PyPDFLoader(tmp_path).load()
+            # A scanned/image-only PDF loads "successfully" but every page is
+            # blank text. Detect that and fall back to OCR on the page images.
+            if not "".join(d.page_content for d in docs).strip():
+                docs = _ocr_pdf(tmp_path)
+        else:
+            docs = TextLoader(tmp_path, encoding="utf-8").load()
         for doc in docs:
             doc.metadata["source_file"] = uploaded_file.name
         return docs
@@ -83,9 +109,8 @@ def build_chain(api_key: str, uploaded_files):
         detail = "; ".join(f"{name} ({err})" for name, err in failed) if failed else "no extractable text"
         raise ValueError(
             f"Couldn't index anything from the upload ({detail}). This usually means a "
-            "corrupted or password-protected PDF, or a scanned/image-only PDF with no "
-            "text layer — OCR isn't supported yet. Try a text-based PDF, or paste the "
-            "content into a .txt file instead."
+            "corrupted or password-protected PDF, or a scanned PDF that produced no text "
+            "even after OCR. Try a text-based PDF, or paste the content into a .txt file."
         )
 
     # Unique collection per index so re-uploading in the same session
