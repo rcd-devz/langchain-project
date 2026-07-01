@@ -105,10 +105,18 @@ required — removing it from a later commit doesn't remove it from git history.
   sends retrieved chunks to OpenRouter's model provider — worth flagging
   explicitly, since a real firm would need a data-processing agreement (or a
   self-hosted model) before doing that with privileged material.
-- **`create_retrieval_chain` + `create_stuff_documents_chain` (LCEL)** instead
-  of the older `RetrievalQA` chain — `RetrievalQA` is legacy in LangChain;
-  the LCEL chains are the current recommended pattern and make it easy to see
-  both the answer and the exact source documents used (`result["context"]`).
+- **Deterministic retrieval chain (`create_retrieval_chain` +
+  `create_stuff_documents_chain`) instead of agentic RAG.** As of LangChain
+  1.0, the framework's default RAG pattern is *agentic*: give the LLM a
+  retriever wrapped as a tool (`create_agent` + `create_retriever_tool`) and
+  let it decide whether/when to search. The deterministic chain used here
+  now lives in the `langchain-classic` package. That's a deliberate choice,
+  not a compatibility shortcut: for a legal document review tool, "always
+  retrieve before answering, every time" is more auditable than an agent
+  that might decide a question doesn't need a document lookup. Both patterns
+  are current and supported — agentic retrieval is a natural next step if
+  this expands to multi-tool workflows (e.g. "search this doc, then look up
+  the cited statute").
 - **Temp files are deleted immediately after loading** — uploaded documents
   are written to a temp file only so `PyPDFLoader`/`TextLoader` can read them,
   then removed. For a law firm's client documents, not leaving copies on disk
