@@ -10,6 +10,8 @@ import os
 import tempfile
 import uuid
 
+os.environ.setdefault("ANONYMIZED_TELEMETRY", "False")  # don't phone home about indexed documents
+
 import streamlit as st
 from dotenv import load_dotenv
 from langchain_community.document_loaders import PyPDFLoader, TextLoader
@@ -91,7 +93,8 @@ def build_chain(api_key: str, uploaded_files):
         [("system", LEGAL_SYSTEM_PROMPT), ("human", "{input}")]
     )
     document_chain = create_stuff_documents_chain(llm, prompt)
-    return create_retrieval_chain(retriever, document_chain)
+    chain = create_retrieval_chain(retriever, document_chain)
+    return chain, chunks  # chunks returned so the UI can show what's actually in the index
 
 
 # ---------------------------------------------------------------- UI ----
@@ -127,16 +130,31 @@ uploaded_files = st.file_uploader(
     accept_multiple_files=True,
 )
 
+def _doc_label(doc) -> str:
+    page = doc.metadata.get("page")
+    source = doc.metadata.get("source_file", "document")
+    return f"**{source}**" + (f", page {page + 1}" if page is not None else "")
+
+
 if uploaded_files:
     current_names = [f.name for f in uploaded_files]
     if st.session_state.get("file_names") != current_names:
         with st.spinner("Indexing document(s)..."):
-            st.session_state.chain = build_chain(api_key, uploaded_files)
+            st.session_state.chain, st.session_state.chunks = build_chain(api_key, uploaded_files)
             st.session_state.file_names = current_names
             st.session_state.history = []
 
     if "history" not in st.session_state:
         st.session_state.history = []
+
+    # This is literally "the database" — the exact chunks that got embedded
+    # and stored in Chroma. There's no separate DB file to open elsewhere:
+    # it's an in-memory index that lives only inside this running app.
+    with st.expander(f"📚 Indexed chunks ({len(st.session_state.chunks)}) — what's actually in the vector store"):
+        for i, chunk in enumerate(st.session_state.chunks):
+            st.markdown(f"**Chunk {i + 1}** — {_doc_label(chunk)}")
+            st.text(chunk.page_content)
+            st.divider()
 
     query = st.chat_input("Ask a question about the uploaded document(s)")
     if query:
@@ -149,13 +167,18 @@ if uploaded_files:
             st.write(question)
         with st.chat_message("assistant"):
             st.write(answer)
-            with st.expander("Sources"):
+            with st.expander("🔍 How this answer was built"):
+                st.markdown(f"**1. Top-{len(sources)} chunks retrieved by similarity search:**")
                 for doc in sources:
-                    page = doc.metadata.get("page")
-                    source = doc.metadata.get("source_file", "document")
-                    label = f"**{source}**" + (f", page {page + 1}" if page is not None else "")
-                    st.markdown(label)
-                    snippet = doc.page_content[:400]
-                    st.text(snippet + ("..." if len(doc.page_content) > 400 else ""))
+                    st.markdown(_doc_label(doc))
+                    st.text(doc.page_content)
+
+                context_text = "\n\n".join(doc.page_content for doc in sources)
+                full_system_prompt = LEGAL_SYSTEM_PROMPT.format(context=context_text)
+                st.markdown("**2. Exact prompt sent to the LLM** (system message, with `{context}` filled in):")
+                st.code(full_system_prompt, language="text")
+                st.markdown(f"**3. Human message sent:** {question!r}")
+                st.markdown("**4. Model's raw answer:**")
+                st.text(answer)
 else:
     st.info("Upload a document to get started — or try the sample in `sample_docs/sample_nda.txt`.")
