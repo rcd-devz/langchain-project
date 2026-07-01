@@ -115,13 +115,16 @@ required — removing it from a later commit doesn't remove it from git history.
    ```
 4. Deploy. No key ever touches the git history.
 
-Every push to the tracked branch triggers an automatic redeploy — no manual
-action needed. Watch **⋮ → Manage app** logs right after pushing to see it
-happen; only use **⋮ → Reboot app** if nothing shows up there after a couple
-minutes (that means the GitHub↔Streamlit connection needs re-establishing,
-not that this is a normal step). For fast iteration, editing in Codespaces or
-locally (instant hot-reload on save) is a much tighter loop than pushing to
-Cloud for every small change — treat the Cloud deploy as "publish," not "test."
+GitHub notifies Streamlit Cloud immediately on every push (verified via the
+repo's webhook delivery log — 200 OK every time), but in practice that
+notification doesn't reliably make the running app pick up the new code by
+itself on the free tier. Treat **⋮ → Reboot app** as a normal step after
+pushing, not just a troubleshooting fallback — push, then reboot, then check.
+That's a quirk of Streamlit Community Cloud itself, not something fixable
+from the GitHub side. For fast iteration, editing in Codespaces or locally
+(instant hot-reload on save, no push/reboot cycle at all) is a much tighter
+loop than pushing to Cloud for every small change — treat the Cloud deploy as
+"publish," not "test."
 
 ## Design decisions & trade-offs
 
